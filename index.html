@@ -66,24 +66,6 @@
             100% { transform: translateY(3px) scale(1.15); box-shadow: 0 0 22px currentColor, 0 0 35px #ffcc00; opacity: 1; }
         }
 
-        /* Admin Download Bar (Only shows when Jamal selects the photo) */
-        #admin-save-bar {
-            display: none;
-            position: fixed;
-            top: 25px;
-            z-index: 999;
-            background: #00ff66;
-            color: #000;
-            padding: 10px 18px;
-            border-radius: 30px;
-            font-weight: 800;
-            font-size: 0.85rem;
-            box-shadow: 0 0 25px #00ff66;
-            cursor: pointer;
-            border: 2px solid #fff;
-            animation: pulseBtn 1s infinite;
-        }
-
         /* ================= SCREEN 1: WELCOME LOCK SCREEN ================= */
         #lock-screen {
             position: relative;
@@ -313,42 +295,24 @@
 
         /* Left Side: Blue Background Photo Frame */
         .leader-photo-box {
-            width: 110px;
-            height: 130px;
+            width: 112px;
+            height: 134px;
             flex-shrink: 0;
-            background: linear-gradient(180deg, #3366ff, #1a44cc);
-            border: 3px solid #66d9ff;
+            background: #2f55ff;
+            border: 2.5px solid #33ccff;
+            outline: 2px solid #ffaa00;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
-            border-radius: 6px;
+            border-radius: 4px;
             overflow: hidden;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
         }
 
         .leader-photo-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            object-position: center;
+            object-position: top center;
             display: block;
-        }
-
-        .photo-fallback {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 4px;
-            text-align: center;
-            line-height: 1.3;
         }
 
         /* Right Side: White Name Box + Blue Hindi Text */
@@ -423,12 +387,6 @@
         <div class="bulb"></div><div class="bulb"></div><div class="bulb"></div><div class="bulb"></div>
     </div>
 
-    <!-- One-Time Save Bar for Jamal -->
-    <button id="admin-save-bar" onclick="downloadPermanentHTML()">
-        💾 फोटो लॉक हो गई! फाइनल index.html डाउनलोड करें
-    </button>
-    <input type="file" id="hidden-file-picker" accept="image/*" style="display:none;" onchange="autoCropAndEmbed(event)">
-
     <!-- Background Diwali Diya Matrix & Fireworks -->
     <canvas id="diwaliCanvas"></canvas>
 
@@ -481,12 +439,9 @@
 
             <!-- Left Photo + Right Name & Designation -->
             <div class="poster-bottom-grid">
-                <div class="leader-photo-box" id="photo-Trigger" onclick="triggerPhotoSelect()">
-                    <img id="leader-img" src="photo.jpg" alt="दिग्विजय कुमार" onerror="this.style.display='none'; document.getElementById('fallback-box').style.display='flex';">
-                    <div id="fallback-box" class="photo-fallback" style="display:none;">
-                        <span style="font-size:1.8rem;">📸</span>
-                        <span>यहाँ टच करके बैनर फोटो चुनें</span>
-                    </div>
+                <div class="leader-photo-box">
+                    <!-- Smart Image Loader: Automatically checks photo.jpg, photo.png, 123864.png, or 123864.jpg -->
+                    <img id="candidate-photo" src="photo.jpg" alt="दिग्विजय कुमार">
                 </div>
 
                 <div class="leader-details-col">
@@ -510,72 +465,18 @@
         <div class="dev-watermark">🔒 DESIGNED BY CYBER WARRIOR JAMAL</div>
     </div>
 
-    <script id="main-script">
-        // Flag to know if photo is already permanently locked
-        let isPhotoLocked = false;
+    <script>
+        // Smart Multi-Filename Photo Loader (No hassle!)
+        const possibleNames = ["photo.jpg", "photo.png", "123864.png", "123864.jpg", "pic.jpg", "pic.png", "image.png", "image.jpg"];
+        let nameIdx = 0;
+        const imgEl = document.getElementById('candidate-photo');
 
-        function triggerPhotoSelect() {
-            if (!isPhotoLocked) {
-                document.getElementById('hidden-file-picker').click();
+        imgEl.onerror = function() {
+            nameIdx++;
+            if (nameIdx < possibleNames.length) {
+                imgEl.src = possibleNames[nameIdx];
             }
-        }
-
-        // Auto-detects if you selected the full banner or a single portrait & embeds it as Base64
-        function autoCropAndEmbed(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const c = document.createElement('canvas');
-                    const ctx = c.getContext('2d');
-                    c.width = 300;
-                    c.height = 360;
-
-                    // If user picked the full wide orange banner (width > height * 1.25),
-                    // automatically crop the exact blue portrait box from bottom-left!
-                    if (img.width > img.height * 1.25) {
-                        const sx = img.width * 0.068;
-                        const sy = img.height * 0.382;
-                        const sw = img.width * 0.285;
-                        const sh = img.height * 0.568;
-                        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, c.width, c.height);
-                    } else {
-                        // Already cropped portrait
-                        ctx.drawImage(img, 0, 0, c.width, c.height);
-                    }
-
-                    const base64Data = c.toDataURL('image/jpeg', 0.9);
-                    const leaderImg = document.getElementById('leader-img');
-                    leaderImg.src = base64Data;
-                    leaderImg.style.display = 'block';
-                    document.getElementById('fallback-box').style.display = 'none';
-                    document.getElementById('admin-save-bar').style.display = 'block';
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Downloads a brand new index.html with the photo permanently locked inside the code!
-        function downloadPermanentHTML() {
-            document.getElementById('admin-save-bar').style.display = 'none';
-            document.getElementById('photo-Trigger').removeAttribute('onclick');
-            document.getElementById('leader-img').removeAttribute('onerror');
-
-            let fullHtml = "<!DOCTYPE html>\n<html lang=\"hi\">\n" + document.documentElement.innerHTML + "\n</html>";
-            fullHtml = fullHtml.replace("let isPhotoLocked = false;", "let isPhotoLocked = true;");
-
-            const blob = new Blob([fullHtml], { type: 'text/html' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'index.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
+        };
 
         // ================= ANTI-COPY & ANTI-INSPECT PROTECTION =================
         document.addEventListener('keydown', function(e) {
